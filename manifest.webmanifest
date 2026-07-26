@@ -1,0 +1,9 @@
+{
+  "name": "Bow Pok\u00e9mon Collection Manager",
+  "short_name": "Bow Pok\u00e9mon",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f4f7fb",
+  "theme_color": "#111827",
+  "description": "A browser-based Pok\u00e9mon collection manager powered by TCGdex."
+}

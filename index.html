@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <meta name="description" content="A browser-based Pokémon card collection manager powered by TCGdex.">
+  <title>Bow Pokémon Collection Manager</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="assets/css/styles.css">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ELQSW0TEBE"></script>
+<script>
+window.dataLayer=window.dataLayer||[];
+function gtag(){dataLayer.push(arguments);}
+gtag('js',new Date());
+gtag('config','G-ELQSW0TEBE',{site_name:'Bow Pokémon Collection Manager',page_title:document.title,page_location:location.href,page_path:location.pathname});
+document.addEventListener('DOMContentLoaded',()=>{
+const c=v=>(v||'').replace(/\s+/g,' ').trim().slice(0,180);
+const send=(n,p={})=>gtag('event',n,Object.assign({site_name:'Bow Pokémon Collection Manager',page_name:document.title,page_path:location.pathname,page_url:location.href,referrer:document.referrer||'direct'},p));
+document.addEventListener('click',e=>{const t=e.target.closest('button,a,label.file-button');if(!t)return;const txt=c(t.innerText||t.id);send('ui_click',{click_text:txt,target_page:t.dataset.page||t.dataset.go||''});
+if(t.matches('.nav-link'))send('app_navigation',{destination:t.dataset.page||txt});
+if(/browse pokémon|browse pokemon|start browsing sets/i.test(txt))send('browse_sets_clicked');
+if(/view collection/i.test(txt))send('view_collection_clicked');
+if(/add to wishlist/i.test(txt))send('wishlist_add_clicked');
+if(/remove from collection/i.test(txt))send('collection_remove_clicked');
+if(/save card/i.test(txt))send('collection_save_clicked');
+if(/export backup/i.test(txt))send('backup_export_clicked');
+if(/import backup/i.test(txt))send('backup_import_clicked');
+if(/export collection csv/i.test(txt))send('csv_export_clicked');
+if(/clear card cache/i.test(txt))send('cache_clear_clicked');
+if(/erase local collection/i.test(txt))send('collection_reset_clicked');
+},true);
+['setSearch','cardSearch','collectionSearch','wishlistSearch'].forEach(id=>{const el=document.getElementById(id);if(!el)return;let s=false;el.addEventListener('input',()=>{if(!s){s=true;send(id+'_started');}});el.addEventListener('change',()=>send(id+'_completed',{query_length:(el.value||'').length}));});
+['seriesFilter','setSort','ownedFilter','cardSort','collectionSetFilter','collectionTradeFilter','conditionName'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('change',()=>send('filter_changed',{filter_name:id,filter_value:c(el.value)}));});
+const f=document.getElementById('ownedForm');if(f){let s=false;f.addEventListener('input',()=>{if(!s){s=true;send('card_edit_started');}},{once:true});f.addEventListener('submit',()=>send('card_saved'));}
+const imp=document.getElementById('importBackupInput');if(imp)imp.addEventListener('change',()=>send('backup_file_selected',{file_count:imp.files?imp.files.length:0}));
+});
+</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <span class="brand-ball"></span>
+      <span>
+        <strong>Bow Pokémon</strong>
+        <small>Collection Manager</small>
+      </span>
+    </div>
+
+    <nav>
+      <button class="nav-link active" data-page="dashboard"><span>⌂</span> Dashboard</button>
+      <button class="nav-link" data-page="sets"><span>▦</span> Browse Sets</button>
+      <button class="nav-link" data-page="collection"><span>◆</span> My Collection</button>
+      <button class="nav-link" data-page="wishlist"><span>♥</span> Wishlist</button>
+      <button class="nav-link" data-page="scanner"><span>⌾</span> Card Scanner <em>WIP</em></button>
+      <button class="nav-link" data-page="settings"><span>⚙</span> Settings</button>
+    </nav>
+
+    <div class="side-note">
+      <span class="online-dot"></span>
+      Card data powered by TCGdex
+    </div>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <button id="menuButton" class="menu-button">☰</button>
+      <div>
+        <p class="eyebrow" id="pageEyebrow">Welcome back</p>
+        <h1 id="pageTitle">Collection Dashboard</h1>
+      </div>
+      <button class="button primary" id="browseSetsButton">Browse Pokémon Sets</button>
+    </header>
+
+    <section class="content">
+      <section class="page active" id="dashboardPage">
+        <section class="hero">
+          <div>
+            <span class="hero-pill">Bow Pokémon Vault</span>
+            <h2>Build your Pokémon collection one set at a time.</h2>
+            <p>Browse official set and card information from TCGdex, then mark the cards and variants you own.</p>
+            <button class="button primary" data-go="sets">Start Browsing Sets</button>
+          </div>
+          <div class="hero-pokeball"><i></i></div>
+        </section>
+
+        <section class="stats">
+          <article><span>Total Cards</span><strong id="totalCardsStat">0</strong><small>Including duplicates</small></article>
+          <article><span>Unique Cards</span><strong id="uniqueCardsStat">0</strong><small>Different cards owned</small></article>
+          <article><span>Sets Started</span><strong id="setsStartedStat">0</strong><small>Sets in your collection</small></article>
+          <article><span>Estimated Value</span><strong id="estimatedValueStat">$0.00</strong><small>Your entered values</small></article>
+          <article><span>Wishlist</span><strong id="wishlistStat">0</strong><small>Cards you are hunting</small></article>
+        </section>
+
+        <section class="dashboard-grid">
+          <article class="panel">
+            <div class="panel-title">
+              <div><p class="eyebrow">Newest additions</p><h3>Recently Updated</h3></div>
+              <button class="text-button" data-go="collection">View collection</button>
+            </div>
+            <div id="recentCards" class="recent-list"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-title">
+              <div><p class="eyebrow">Your progress</p><h3>Sets Started</h3></div>
+              <button class="text-button" data-go="sets">All sets</button>
+            </div>
+            <div id="setProgressList" class="progress-list"></div>
+          </article>
+        </section>
+      </section>
+
+      <section class="page" id="setsPage">
+        <div class="toolbar">
+          <label class="search"><span>⌕</span><input id="setSearch" type="search" placeholder="Search sets or series"></label>
+          <select id="seriesFilter"><option value="">All Series</option></select>
+          <select id="setSort">
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="name">Name A–Z</option>
+          </select>
+        </div>
+        <div id="setsStatus" class="loading">Loading Pokémon sets from TCGdex…</div>
+        <div id="setsGrid" class="sets-grid"></div>
+      </section>
+
+      <section class="page" id="setDetailPage">
+        <div id="setHero" class="set-hero skeleton"></div>
+        <div class="toolbar">
+          <button class="button secondary" id="backToSets">← All Sets</button>
+          <label class="search"><span>⌕</span><input id="cardSearch" type="search" placeholder="Search this set"></label>
+          <select id="ownedFilter">
+            <option value="">All cards</option>
+            <option value="owned">Owned only</option>
+            <option value="missing">Missing only</option>
+          </select>
+          <select id="cardSort">
+            <option value="number">Card number</option>
+            <option value="name">Name A–Z</option>
+          </select>
+        </div>
+        <div id="cardsStatus" class="loading">Choose a set to begin.</div>
+        <div id="cardsGrid" class="cards-grid"></div>
+      </section>
+
+      <section class="page" id="collectionPage">
+        <div class="toolbar">
+          <label class="search"><span>⌕</span><input id="collectionSearch" type="search" placeholder="Search your collection"></label>
+          <select id="collectionSetFilter"><option value="">All Sets</option></select>
+          <select id="collectionTradeFilter">
+            <option value="">All Cards</option>
+            <option value="trade">For Trade</option>
+            <option value="favorite">Favorites</option>
+          </select>
+        </div>
+        <div id="collectionStatus" class="result-count"></div>
+        <div id="collectionGrid" class="cards-grid"></div>
+      </section>
+
+      <section class="page" id="wishlistPage">
+        <div class="toolbar">
+          <label class="search"><span>⌕</span><input id="wishlistSearch" type="search" placeholder="Search wishlist"></label>
+          <button class="button secondary" data-go="sets">Browse Sets</button>
+        </div>
+        <div id="wishlistGrid" class="cards-grid"></div>
+      </section>
+
+      <section class="page" id="scannerPage">
+        <section class="wip-panel">
+          <div class="scanner-graphic"><div></div></div>
+          <span class="wip-badge">Work in Progress</span>
+          <h2>Automatic card scanning is coming later.</h2>
+          <p>For now, browse Pokémon sets and mark cards manually. The scanner page is reserved for a future update.</p>
+          <button class="button primary" data-go="sets">Browse Pokémon Sets</button>
+        </section>
+      </section>
+
+      <section class="page" id="settingsPage">
+        <div class="settings-grid">
+          <article class="panel">
+            <h2>Collection Storage</h2>
+            <p>Your collection is saved in this browser using IndexedDB.</p>
+            <div class="setting-row"><span>Storage type</span><strong>Local browser</strong></div>
+            <div class="setting-row"><span>Account required</span><strong class="good">No</strong></div>
+            <div class="setting-row"><span>Internet required</span><strong>For card data and images</strong></div>
+          </article>
+
+          <article class="panel">
+            <h2>Backup and Restore</h2>
+            <p>Export your collection regularly so it can be moved to another browser or device.</p>
+            <div class="button-stack">
+              <button class="button primary" id="exportBackupButton">Export Backup</button>
+              <label class="button secondary file-button">Import Backup<input id="importBackupInput" type="file" accept=".json" hidden></label>
+              <button class="button secondary" id="exportCsvButton">Export Collection CSV</button>
+            </div>
+          </article>
+
+          <article class="panel">
+            <h2>TCGdex Cache</h2>
+            <p>Set and card responses are cached in the browser to make repeat visits faster.</p>
+            <button class="button secondary" id="clearCacheButton">Clear Card Cache</button>
+          </article>
+
+          <article class="panel danger-panel">
+            <h2>Reset Collection</h2>
+            <p>This permanently removes the collection and wishlist from this browser.</p>
+            <button class="button danger" id="resetCollectionButton">Erase Local Collection</button>
+          </article>
+        </div>
+      </section>
+    </section>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="ownedModal">
+  <section class="modal">
+    <button class="modal-close" data-close>×</button>
+    <div class="modal-card-head">
+      <img id="modalCardImage" alt="">
+      <div><p class="eyebrow">Collection details</p><h2 id="modalCardName"></h2><p id="modalCardMeta"></p></div>
+    </div>
+    <form id="ownedForm" class="form-grid">
+      <input type="hidden" id="modalCardId">
+      <input type="hidden" id="modalSetId">
+      <input type="hidden" id="modalLocalId">
+      <input type="hidden" id="modalImageUrl">
+      <label>Normal copies<input id="normalQuantity" type="number" min="0" value="1"></label>
+      <label>Reverse Holo copies<input id="reverseQuantity" type="number" min="0" value="0"></label>
+      <label>Holo / Special copies<input id="holoQuantity" type="number" min="0" value="0"></label>
+      <label>Condition
+        <select id="conditionName">
+          <option>Near Mint</option><option>Lightly Played</option>
+          <option>Moderately Played</option><option>Heavily Played</option>
+          <option>Damaged</option><option>Graded</option>
+        </select>
+      </label>
+      <label>Purchase price<input id="purchasePrice" type="number" min="0" step="0.01" value="0"></label>
+      <label>Estimated value<input id="estimatedValue" type="number" min="0" step="0.01" value="0"></label>
+      <label class="check"><input id="favorite" type="checkbox"> Favorite card</label>
+      <label class="check"><input id="forTrade" type="checkbox"> Available for trade</label>
+      <label class="wide">Notes<textarea id="cardNotes" rows="3"></textarea></label>
+      <div class="modal-actions wide">
+        <button id="wishlistButton" class="button secondary" type="button">Add to Wishlist</button>
+        <button id="removeOwnedButton" class="button danger" type="button">Remove from Collection</button>
+        <button class="button primary" type="submit">Save Card</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="assets/js/db.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
